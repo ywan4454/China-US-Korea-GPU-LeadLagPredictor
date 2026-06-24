@@ -3,9 +3,8 @@ import pandas as pd
 import yfinance as yf
 import akshare as ak
 
-# 设置代理
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:1087"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:1087"
+# 代理配置：仅在环境变量已设置时生效（本地开发按需配置，CI 环境无需代理）
+# 若需本地代理，请在 .env 中设置 HTTP_PROXY / HTTPS_PROXY，不要硬编码
 
 def fetch_us_soxx(start_date="2020-01-01"):
     """
