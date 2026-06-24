@@ -3,8 +3,10 @@ import pandas as pd
 import yfinance as yf
 import akshare as ak
 
-# 代理配置：仅在环境变量已设置时生效（本地开发按需配置，CI 环境无需代理）
-# 若需本地代理，请在 .env 中设置 HTTP_PROXY / HTTPS_PROXY，不要硬编码
+# 主动清除所有代理环境变量：curl_cffi 会自动读取系统级代理设置，必须在此层面限止
+# （本地开发需代理时，请在运行脏脚本前手动导入不要在此修改）
+for _proxy_key in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "ALL_PROXY", "all_proxy"]:
+    os.environ.pop(_proxy_key, None)
 
 def fetch_us_soxx(start_date="2020-01-01"):
     """
