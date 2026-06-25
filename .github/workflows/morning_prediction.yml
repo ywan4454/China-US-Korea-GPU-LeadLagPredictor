@@ -12,11 +12,6 @@ jobs:
 
     env:
       WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
-      # 明确清空代理，防止 curl_cffi 继承 runner 环境中的任何代理配置
-      HTTP_PROXY: ""
-      HTTPS_PROXY: ""
-      http_proxy: ""
-      https_proxy: ""
 
     steps:
       - name: Checkout code
