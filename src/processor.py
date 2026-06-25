@@ -1,45 +1,126 @@
-import pandas as pd
+"""
+processor.py — 多市场数据对齐与特征工程
+- 美股因子：T-1对齐（merge_asof backward, 严格不含当日）
+- 韩股因子：T日对齐（直接reindex）
+- A股目标：等权板块篮子 + 个股标签
+"""
+from __future__ import annotations
 
-def align_data(soxx_df, samsung_df, ashare_df):
+
+import pandas as pd
+import numpy as np
+from src.stocks_universe import SECTORS
+
+
+def align_us_to_ashare(us_returns: pd.DataFrame, ashare_dates: pd.DatetimeIndex) -> pd.DataFrame:
     """
-    将美股、韩股数据对齐到A股的交易日。
-    A股的T日：
-      - 韩股：取T日
-      - 美股：取T日之前最近的一个交易日 (T-1或更早)
+    将美股收益率对齐到A股交易日，采用严格T-1逻辑：
+    对每个A股交易日T，取最近一个美股T-1收盘（不含T日本身）
     """
-    print("Aligning cross-market data...")
-    # 以A股交易日为基准
-    df = pd.DataFrame(index=ashare_df.index)
-    df['A_ETF_Label'] = ashare_df['A_ETF_Label']
-    
-    # 1. 对齐韩股 T日特征：直接按日期 merge。如果韩股休市，会是 NaN
-    df = df.join(samsung_df[['Samsung_Gap']], how='left')
-    
-    # 2. 对齐美股 T-1 特征：向后寻找最近的美股交易日
-    soxx_returns = soxx_df[['SOXX_Return']].dropna()
-    
-    df_reset = df.reset_index()
-    soxx_reset = soxx_returns.reset_index()
-    
-    # merge_asof 需要先按时间排序
-    df_reset = df_reset.sort_values('Date')
-    soxx_reset = soxx_reset.sort_values('Date')
-    
-    # allow_exact_matches=False 代表严格取 T 日之前最近的一个交易日作为 T-1
+    base = pd.DataFrame({"Date": ashare_dates}).sort_values("Date")
+    us_reset = us_returns.reset_index().sort_values("Date")
+    us_reset = us_reset.rename(columns={"index": "Date"}) if "index" in us_reset.columns else us_reset
+
     aligned = pd.merge_asof(
-        df_reset,
-        soxx_reset,
-        left_on='Date',
-        right_on='Date',
-        direction='backward',
-        allow_exact_matches=False 
+        base,
+        us_reset,
+        on="Date",
+        direction="backward",
+        allow_exact_matches=False,   # 严格T-1，不取当日
     )
-    
-    aligned.set_index('Date', inplace=True)
-    
-    # 3. 剔除含有 NaN 的行（代表某方休市或数据缺失）
-    original_len = len(aligned)
-    aligned.dropna(inplace=True)
-    print(f"Data aligned. Original A-share days: {original_len}, After dropping NaNs: {len(aligned)}")
-    
+    aligned = aligned.set_index("Date")
     return aligned
+
+
+def build_sector_features(
+    us_aligned: pd.DataFrame,
+    kr_gaps: pd.DataFrame,
+    ashare_dates: pd.DatetimeIndex,
+) -> pd.DataFrame:
+    """
+    为每个板块生成聚合信号（板块内股票等权平均）
+    - {sector}_US: 美股板块信号（T-1）
+    - {sector}_KR: 韩股板块信号（T日跳空）
+    """
+    kr_aligned = kr_gaps.reindex(ashare_dates)
+    sector_feats: dict[str, pd.Series] = {}
+
+    for sk, sd in SECTORS.items():
+        us_cols = [f"US_{t}" for t in sd["us"] if f"US_{t}" in us_aligned.columns]
+        if us_cols:
+            sector_feats[f"{sk}_US"] = us_aligned[us_cols].mean(axis=1)
+
+        kr_cols = [f"KR_{t.split('.')[0]}" for t in sd["kr"]
+                   if f"KR_{t.split('.')[0]}" in kr_aligned.columns]
+        if kr_cols:
+            sector_feats[f"{sk}_KR"] = kr_aligned[kr_cols].mean(axis=1)
+
+    return pd.DataFrame(sector_feats, index=ashare_dates)
+
+
+def build_ashare_baskets(
+    ashare_data: dict,
+    ashare_dates: pd.DatetimeIndex,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    构建两类目标：
+    1. sector_df: 每板块等权篮子的收益率 & 方向标签
+    2. stock_df:  每只个股的方向标签
+    """
+    sector_rows: dict[str, pd.Series] = {}
+    stock_rows:  dict[str, pd.Series] = {}
+
+    for sk, sd in SECTORS.items():
+        returns_list = []
+        for code, name in sd["a"].items():
+            if code in ashare_data:
+                r = ashare_data[code]["return"].reindex(ashare_dates)
+                returns_list.append(r)
+                stock_rows[f"A_{code}_{name}_Label"] = ashare_data[code]["label"].reindex(ashare_dates)
+
+        if returns_list:
+            basket = pd.concat(returns_list, axis=1).mean(axis=1)
+            sector_rows[f"{sk}_basket_ret"] = basket
+            sector_rows[f"{sk}_label"] = (basket > 0).astype(int)
+
+    return (
+        pd.DataFrame(sector_rows, index=ashare_dates),
+        pd.DataFrame(stock_rows, index=ashare_dates),
+    )
+
+
+def build_full_dataset(
+    us_aligned: pd.DataFrame,
+    kr_gaps: pd.DataFrame,
+    sector_features: pd.DataFrame,
+    sector_targets: pd.DataFrame,
+    stock_labels: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    合并所有数据，以板块标签列不全为NaN为基准删除缺失行
+    """
+    kr_aligned = kr_gaps.reindex(sector_features.index)
+
+    all_data = pd.concat([
+        us_aligned,
+        kr_aligned,
+        sector_features,
+        sector_targets,
+        stock_labels,
+    ], axis=1)
+
+    # 只要有任一板块标签存在就保留该行
+    label_cols = [c for c in all_data.columns if c.endswith("_label")]
+    all_data = all_data[all_data[label_cols].notna().any(axis=1)]
+
+    print(f"  Full dataset: {len(all_data)} rows × {len(all_data.columns)} cols")
+    return all_data
+
+
+def get_feature_columns(df: pd.DataFrame) -> list[str]:
+    """提取所有特征列（US_ / KR_ / _US / _KR 开头结尾的列）"""
+    return [
+        c for c in df.columns
+        if c.startswith("US_") or c.startswith("KR_")
+           or c.endswith("_US") or c.endswith("_KR")
+    ]
