@@ -2,42 +2,14 @@
 data_fetcher.py — 多市场数据获取模块
 - 美股：yfinance 批量下载，取T-1日收益率作为预测因子
 - 韩股：yfinance 批量下载，取T日开盘跳空作为预测因子
-- A股：akshare 逐只获取日线数据（支持国内直连）
+- A股：使用 yfinance 获取（添加 .SS 或 .SZ 后缀），避免 akshare 的网络不稳定问题
 """
 
 import os
-import time
-import contextlib
 import pandas as pd
 import yfinance as yf
-import akshare as ak
 
 from src.stocks_universe import get_all_us_tickers, get_all_kr_tickers, get_all_ashare_codes
-
-
-@contextlib.contextmanager
-def _no_proxy():
-    """
-    临时设置 NO_PROXY=* 让 akshare 绕过所有代理直连国内域名。
-    requests 库优先检查 NO_PROXY；设为 * 则对所有 host 绕过代理。
-    退出上下文后恢复原始 NO_PROXY 值，yfinance 的代理设置不受影响。
-    """
-    saved_no_proxy = os.environ.get("NO_PROXY")
-    saved_no_proxy_lower = os.environ.get("no_proxy")
-    os.environ["NO_PROXY"] = "*"
-    os.environ["no_proxy"] = "*"
-    try:
-        yield
-    finally:
-        if saved_no_proxy is None:
-            os.environ.pop("NO_PROXY", None)
-        else:
-            os.environ["NO_PROXY"] = saved_no_proxy
-        if saved_no_proxy_lower is None:
-            os.environ.pop("no_proxy", None)
-        else:
-            os.environ["no_proxy"] = saved_no_proxy_lower
-
 
 def _parse_multiindex(raw: pd.DataFrame, field: str, tickers: list) -> pd.DataFrame:
     """从 yfinance 返回的 DataFrame 中提取指定 field（兼容单/多ticker）"""
@@ -47,7 +19,6 @@ def _parse_multiindex(raw: pd.DataFrame, field: str, tickers: list) -> pd.DataFr
         col = raw[field] if field in raw.columns else raw.iloc[:, 0]
         return col.to_frame(name=tickers[0])
 
-    # 多ticker：MultiIndex columns
     try:
         result = raw[field]
         if isinstance(result, pd.DataFrame):
@@ -69,7 +40,6 @@ def _parse_multiindex(raw: pd.DataFrame, field: str, tickers: list) -> pd.DataFr
 def fetch_us_stocks(start_date: str = "2022-01-01") -> pd.DataFrame:
     """
     批量获取所有美股因子 → 返回每日收益率 DataFrame
-    列名格式: US_NVDA, US_AMD, ...
     """
     tickers = get_all_us_tickers()
     print(f"  Fetching {len(tickers)} US tickers: {tickers}")
@@ -88,7 +58,6 @@ def fetch_us_stocks(start_date: str = "2022-01-01") -> pd.DataFrame:
 def fetch_korea_stocks(start_date: str = "2022-01-01") -> pd.DataFrame:
     """
     批量获取所有韩股因子 → 返回T日开盘跳空收益率 DataFrame
-    列名格式: KR_005930, KR_000660, ...
     """
     tickers = get_all_kr_tickers()
     print(f"  Fetching {len(tickers)} Korea tickers: {tickers}")
@@ -107,38 +76,50 @@ def fetch_korea_stocks(start_date: str = "2022-01-01") -> pd.DataFrame:
     return gaps
 
 
-def fetch_ashare_stocks(start_date: str = "20220101") -> dict:
+def fetch_ashare_stocks(start_date: str = "2022-01-01") -> dict:
     """
-    逐只获取A股目标股票日线数据（通过akshare访问东方财富，国内直连）
+    使用 yfinance 获取A股日线数据。
     返回: {code: {'return': Series, 'label': Series, 'name': str}}
     """
     codes = get_all_ashare_codes()
     results = {}
+    
+    # 构造 yfinance 的 ticker 列表
+    # 6开头的是上海(.SS), 0和3开头的是深圳(.SZ)
+    yf_tickers = []
+    ticker_to_code = {}
+    for code in codes:
+        suffix = ".SS" if code.startswith("6") else ".SZ"
+        ticker = f"{code}{suffix}"
+        yf_tickers.append(ticker)
+        ticker_to_code[ticker] = code
 
-    for i, (code, name) in enumerate(codes.items(), 1):
-        print(f"  [{i:>2}/{len(codes)}] {name} ({code})")
+    print(f"  Fetching {len(yf_tickers)} A-share tickers via yfinance...")
+    raw = yf.download(
+        yf_tickers if len(yf_tickers) > 1 else yf_tickers[0],
+        start=start_date, progress=False, auto_adjust=True
+    )
+    
+    closes = _parse_multiindex(raw, "Close", yf_tickers)
+    opens = _parse_multiindex(raw, "Open", yf_tickers)
+
+    for ticker in yf_tickers:
+        code = ticker_to_code[ticker]
+        name = codes[code]
         try:
-            with _no_proxy():
-                df = ak.stock_zh_a_hist(
-                    symbol=code, period="daily",
-                    start_date=start_date, adjust="qfq"
-                )
+            close_s = closes[ticker].dropna()
+            open_s = opens[ticker].dropna()
+            
+            # 取交集对齐
+            idx = close_s.index.intersection(open_s.index)
+            if len(idx) == 0:
+                print(f"    WARN: {name} ({code}) no data")
+                continue
+                
+            close_s = close_s.loc[idx]
+            open_s = open_s.loc[idx]
 
-            # 兼容 akshare 不同版本列名
-            col_map = {}
-            for c in df.columns:
-                cl = str(c)
-                if "日期" in cl or cl.lower() == "date":
-                    col_map[c] = "Date"
-                elif "开盘" in cl or cl.lower() in ("open",):
-                    col_map[c] = "Open"
-                elif "收盘" in cl or cl.lower() in ("close",):
-                    col_map[c] = "Close"
-            df = df.rename(columns=col_map)[["Date", "Open", "Close"]].copy()
-            df["Date"] = pd.to_datetime(df["Date"])
-            df = df.set_index("Date").sort_index()
-
-            intraday = (df["Close"] - df["Open"]) / df["Open"]
+            intraday = (close_s - open_s) / open_s
             results[code] = {
                 "return": intraday,
                 "label": (intraday > 0).astype(int),
@@ -146,10 +127,6 @@ def fetch_ashare_stocks(start_date: str = "20220101") -> dict:
             }
         except Exception as e:
             print(f"    WARN: {name} ({code}) failed — {e}")
-
-        # 避免 akshare 触发频率限制
-        if i % 5 == 0:
-            time.sleep(0.5)
 
     print(f"  A-share done — {len(results)}/{len(codes)} fetched OK")
     return results

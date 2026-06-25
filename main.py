@@ -34,7 +34,7 @@ def main():
     kr_gaps = fetch_korea_stocks("2022-01-01")
 
     print("\n[Step 3/4] 获取A股目标数据（22只个股）...")
-    ashare_data = fetch_ashare_stocks("20220101")
+    ashare_data = fetch_ashare_stocks("2022-01-01")
 
     if not ashare_data:
         print("ERROR: 无法获取任何A股数据，请检查网络连接。")
