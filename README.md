@@ -45,18 +45,32 @@
 
 ## 🚀 部署与运行 (Usage)
 
-本项目配置了 GitHub Actions CI/CD 流水线，每日自动运行：
+本系统支持两种运行模式，你可以根据需求选择：
 
-- **触发时间**: 工作日 (周一至周五) 北京时间 09:10 (UTC 01:10)
-- **运行脚本**: `morning_prediction.yml` -> `python generate_report.py`
-- **环境变量**: 需在 GitHub Secrets 中配置 `WECHAT_WEBHOOK_URL` 以启用企业微信推送。
+### 模式一：云端自动化推送（推荐 / 零代码配置）
+本项目配置了 GitHub Actions CI/CD 流水线，可实现每日全自动预测并推送到你的手机。
 
-### 本地运行测试
+1. 点击右上角 **Fork** 将本仓库复制到你的 GitHub 账号下。
+2. 在你的仓库中进入 `Settings` -> `Secrets and variables` -> `Actions`。
+3. 新建 Secret：名称填入 `WECHAT_WEBHOOK_URL`，值填入你的企业微信群机器人的 Webhook 链接。
+4. 每天工作日北京时间 **09:10 (UTC 01:10)**，GitHub 服务器将自动运行模型并为你推送预测结果。
+
+### 模式二：极客本地运行模式
+如果你喜欢钻研量化代码，可以直接在本地 Bash 终端中运行：
+
 ```bash
-# 安装依赖
+# 1. 下载代码到本地
+git clone https://github.com/ywan4454/China-US-Korea-GPU-LeadLagPredictor.git
+
+# 2. 进入项目目录
+cd China-US-Korea-GPU-LeadLagPredictor
+
+# 3. 安装必备依赖 (请确保已安装 Python)
 pip install -r requirements.txt
 
-# 运行主程序（如在国内需要配置代理）
+# 4. 运行预测模型
+# 💡 提示：如在国内运行，因访问 Yahoo Finance，可能需要配置终端代理，例如：
+# export https_proxy=http://127.0.0.1:7890
 python main.py
 ```
 
