@@ -74,5 +74,16 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## 🤝 如何贡献代码 (How to Contribute)
+
+欢迎大家为这个开源项目贡献代码！由于安全权限控制，你不能直接将代码 push 到本仓库。请按照以下标准的开源工作流提交你的代码：
+
+1. **Fork 本仓库**：点击右上角的 `Fork` 按钮，将项目复制到你的 GitHub 账号下。
+2. **克隆到本地**：`git clone https://github.com/你的用户名/China-US-Korea-GPU-LeadLagPredictor.git`
+3. **创建分支**：`git checkout -b feature/your-feature-name`
+4. **提交代码**：`git commit -m 'Add some amazing feature'`
+5. **推送到你的仓库**：`git push origin feature/your-feature-name`
+6. **发起 Pull Request (PR)**：回到本仓库主页，点击 `Pull requests` -> `New pull request`，提交你的修改请求。我会在这里手动审阅你的代码，审核通过后就会合并到主分支中！
+
 ---
 *⚠️ **免责声明 (Disclaimer)**: 本系统基于量化统计模型，历史规律不代表未来表现。模型仅使用价格量价信号，未考虑基本面、政策、突发事件等因素。预测结果仅供技术交流与参考，不构成任何实质性投资建议。*
