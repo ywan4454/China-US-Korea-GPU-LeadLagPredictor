@@ -28,13 +28,14 @@ def main():
 
     # ── 1. 获取数据 ──────────────────────────────────────────────
     print("\n[Step 1/4] 获取美股因子数据...")
-    us_returns = fetch_us_stocks("2022-01-01")
+    us_returns = fetch_us_stocks("2025-09-01")
+    print("US data fetched.")
 
-    print("\n[Step 2/4] 获取韩股因子数据...")
-    kr_gaps = fetch_korea_stocks("2022-01-01")
+    kr_gaps = fetch_korea_stocks("2025-09-01")
+    print("KR data fetched.")
 
     print("\n[Step 3/4] 获取A股目标数据（22只个股）...")
-    ashare_data = fetch_ashare_stocks("2022-01-01")
+    ashare_data = fetch_ashare_stocks("2025-09-01")
 
     if not ashare_data:
         print("ERROR: 无法获取任何A股数据，请检查网络连接。")

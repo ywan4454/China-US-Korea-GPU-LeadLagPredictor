@@ -117,13 +117,13 @@ def main():
     print("=" * 60)
 
     print("\n[1/4] 获取美股数据...")
-    us_returns = fetch_us_stocks("2022-01-01")
+    us_returns = fetch_us_stocks("2025-09-01")
+    print("US data fetched.")
 
-    print("\n[2/4] 获取韩股数据...")
-    kr_gaps = fetch_korea_stocks("2022-01-01")
+    kr_gaps = fetch_korea_stocks("2025-09-01")
+    print("KR data fetched.")
 
-    print("\n[3/4] 获取A股数据...")
-    ashare_data = fetch_ashare_stocks("2022-01-01")
+    ashare_data = fetch_ashare_stocks("2025-09-01")
 
     print("\n[4/4] 对齐 & 训练模型...")
     all_dates = None
