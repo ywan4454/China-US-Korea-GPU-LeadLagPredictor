@@ -1,8 +1,8 @@
 {
     "2026-06-29": {
         "s1_design": {
-            "prob_up": 0.4529278780046631,
-            "pred_dir": null,
+            "prob_up": 0.45292787800466316,
+            "pred_dir": 0,
             "actual_label": null,
             "correct": null
         },
@@ -14,12 +14,12 @@
         },
         "s3_pkg": {
             "prob_up": 0.40245617915079873,
-            "pred_dir": 0,
+            "pred_dir": null,
             "actual_label": null,
             "correct": null
         },
         "s4_server": {
-            "prob_up": 0.4553647870026685,
+            "prob_up": 0.45536478700266864,
             "pred_dir": null,
             "actual_label": null,
             "correct": null
