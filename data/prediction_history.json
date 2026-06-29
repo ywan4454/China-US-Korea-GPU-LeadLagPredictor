@@ -193,32 +193,32 @@
     },
     "2026-06-29": {
         "s1_design": {
-            "prob_up": 0.4545314134925721,
-            "pred_dir": null,
+            "prob_up": 0.4529278780046631,
+            "pred_dir": 0,
             "actual_label": null,
             "correct": null
         },
         "s2_mfg": {
-            "prob_up": 0.4315334873662194,
+            "prob_up": 0.4640656154117343,
             "pred_dir": null,
             "actual_label": null,
             "correct": null
         },
         "s3_pkg": {
-            "prob_up": 0.41129505158334484,
+            "prob_up": 0.4024561791507987,
             "pred_dir": null,
             "actual_label": null,
             "correct": null
         },
         "s4_server": {
-            "prob_up": 0.4227358140035107,
-            "pred_dir": 0,
+            "prob_up": 0.45536478700266864,
+            "pred_dir": null,
             "actual_label": null,
             "correct": null
         },
         "s5_connect": {
-            "prob_up": 0.4328045532795501,
-            "pred_dir": 0,
+            "prob_up": 0.45463212850075896,
+            "pred_dir": null,
             "actual_label": null,
             "correct": null
         }
