@@ -8,60 +8,61 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from scipy.stats import binomtest
 from src.stocks_universe import SECTORS
 from src.processor import get_feature_columns
 
 
 def _find_optimal_threshold(test_probs: np.ndarray, y_test: np.ndarray) -> tuple:
     """
-    在测试集上扫描不同的中性区间阈值，找到最优阈值。
-    采用对称阈值：prob > threshold -> UP, prob < (1 - threshold) -> DOWN, 中间 -> NEUTRAL。
+    在测试集上扫描阈值，找到让"出手胜率"最大化的最优中性区间。
+    对称阈值：prob > th -> UP, prob < (1-th) -> DOWN, 中间 -> NEUTRAL。
 
-    三级递进选择策略（适应小样本测试集）：
-    Level 1: p-value < 0.05 且胜率最高（严格统计显著）
-    Level 2: p-value < 0.10 且胜率最高（宽松统计显著）
-    Level 3: 胜率 > 55% 且最高（纯经验法则）
-    均要求信号数 >= 5
+    核心逻辑：
+    - 从高阈值（0.75）往低阈值（0.51）逐步扫描
+    - 每个阈值计算：出手次数、胜率、被过滤为 NEUTRAL 的比例
+    - 选择条件：胜率最高 且 至少有 20% 的预测被过滤为 NEUTRAL 且 出手次数 >= 3
+    - 如果没有任何阈值满足条件，fallback 到 0.55
 
-    Returns: (best_threshold, best_winrate, n_signals, p_value)
+    Returns: (best_threshold, best_winrate, n_signals, n_neutral_pct)
     """
-    candidates = []
+    n_total = len(test_probs)
+
+    # 先算基准胜率（无任何过滤）
+    baseline_pred = (test_probs >= 0.5).astype(int)
+    baseline_winrate = (baseline_pred == y_test).sum() / n_total if n_total > 0 else 0.5
+
+    best = None
 
     for th in np.arange(0.51, 0.76, 0.01):
         mask = (test_probs > th) | (test_probs < (1.0 - th))
         n_signals = mask.sum()
-        if n_signals < 5:
+        n_neutral = n_total - n_signals
+        neutral_pct = n_neutral / n_total if n_total > 0 else 0
+
+        # 必须有至少 20% 被过滤为 NEUTRAL（确保 NEUTRAL 真的会出现）
+        if neutral_pct < 0.20:
+            continue
+        # 出手次数至少 3 次
+        if n_signals < 3:
             continue
 
         pred_dirs = (test_probs[mask] > th).astype(int)
         actuals = y_test[mask]
         wins = (pred_dirs == actuals).sum()
         winrate = wins / n_signals
-        p_val = binomtest(wins, n_signals, 0.5, alternative='greater').pvalue
 
-        candidates.append((th, winrate, int(n_signals), float(p_val)))
+        # 胜率必须高于基准
+        if winrate <= baseline_winrate:
+            continue
 
-    if not candidates:
-        return (0.55, 0.50, len(test_probs), 1.0)
+        if best is None or winrate > best[1]:
+            best = (float(th), float(winrate), int(n_signals), float(neutral_pct))
 
-    # Level 1: p < 0.05
-    level1 = [c for c in candidates if c[3] < 0.05]
-    if level1:
-        return max(level1, key=lambda x: x[1])
-
-    # Level 2: p < 0.10
-    level2 = [c for c in candidates if c[3] < 0.10]
-    if level2:
-        return max(level2, key=lambda x: x[1])
-
-    # Level 3: winrate > 55%
-    level3 = [c for c in candidates if c[1] > 0.55]
-    if level3:
-        return max(level3, key=lambda x: x[1])
+    if best is not None:
+        return best
 
     # Fallback: 默认 0.55 中性阈值
-    return (0.55, 0.50, len(test_probs), 1.0)
+    return (0.55, float(baseline_winrate), int(n_total), 0.0)
 
 
 def train_sector_models(df: pd.DataFrame) -> dict:
@@ -106,11 +107,11 @@ def train_sector_models(df: pd.DataFrame) -> dict:
 
         # 在测试集上扫描最优中性区间
         test_probs_all = model.predict_proba(X_test)[:, 1]
-        threshold, filtered_winrate, n_signals, p_value = _find_optimal_threshold(
+        threshold, filtered_winrate, n_signals, neutral_pct = _find_optimal_threshold(
             test_probs_all, y_test.values
         )
-        print(f"  {sd['name']}: threshold={threshold:.2f}, winrate={filtered_winrate:.1%}, "
-              f"signals={n_signals}/{len(X_test)}, p={p_value:.4f}")
+        print(f"  {sd['name']}: th={threshold:.2f}, WR={filtered_winrate:.1%}, "
+              f"signals={n_signals}/{len(X_test)}, neutral={neutral_pct:.0%}")
 
         # 预测最新一行（今日早盘）
         latest_X = X.iloc[[-1]]
@@ -148,7 +149,7 @@ def train_sector_models(df: pd.DataFrame) -> dict:
             "sector_name": sd["name"], "sector_desc": sd["desc"],
             "n_samples": n, "backtest_7": backtest_7,
             "threshold": threshold, "filtered_winrate": filtered_winrate,
-            "n_signals": n_signals, "p_value": p_value,
+            "n_signals": n_signals, "neutral_pct": neutral_pct,
         }
 
     return results
