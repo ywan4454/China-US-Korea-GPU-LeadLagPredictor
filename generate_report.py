@@ -27,17 +27,6 @@ REPORT_FILE   = "data/daily_report.md"
 TODAY_STR     = datetime.now().strftime("%Y-%m-%d")
 
 
-def signal_emoji(prob: float) -> str:
-    if prob >= 0.60: return "🟢 强多"
-    if prob >= 0.55: return "🟩 偏多"
-    if prob <= 0.40: return "🔴 强空"
-    if prob <= 0.45: return "🟧 偏空"
-    return "⬜ 中性"
-
-def bar(prob: float, width: int = 10) -> str:
-    filled = round(prob * width)
-    return "█" * filled + "░" * (width - filled)
-
 
 def build_backtest_table(df: pd.DataFrame, sector_results: dict) -> dict:
     """
@@ -80,115 +69,30 @@ def build_backtest_table(df: pd.DataFrame, sector_results: dict) -> dict:
 
 def generate_markdown(sector_results: dict, backtest: dict, df: pd.DataFrame) -> str:
     lines = []
-
-    lines += [
-        f"# GPU/AI 产业链 · 早盘预测报告",
-        f"",
-        f"> 生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M')} | 基于 Lead-Lag 跨市场效应（美/韩股 → A股）",
-        f"",
-        "---",
-        "",
-    ]
-
-    # ── Part 1：今日预测 ──────────────────────────────────────────
-    lines += [
-        "## 📊 今日预测",
-        f"",
-        f"**预测日期：{TODAY_STR}**（美股 T-1 信号 + 韩股 T 日跳空信号）",
-        "",
-        "| 板块 | 涵盖环节 | 上涨概率 | 信号 | 强度 |",
-        "|------|---------|:--------:|------|------|",
-    ]
-
-    for sk, res in sector_results.items():
+    
+    lines.append(f"## 🤖 AI-Quant System")
+    lines.append(f"> **Date**: {TODAY_STR} | **Target**: A-Share")
+    lines.append("")
+    
+    for i, (sk, res) in enumerate(sector_results.items(), 1):
+        sector_name = res["sector_name"]
         prob = res["prob_up"]
-        lines.append(
-            f"| {res['sector_name']} | {res['sector_desc'][:28]}… | "
-            f"**{prob:.1%}** | {signal_emoji(prob)} | `{bar(prob)}` |"
-        )
-
-    lines += ["", "### 个股预测明细", ""]
-
-    for sk, res in sector_results.items():
-        lines.append(f"**{res['sector_name']}**")
+        
+        hist_str = ""
+        if sk in backtest:
+            bt_df = backtest[sk]
+            results = []
+            for _, row in bt_df.iterrows():
+                results.append("✅" if row["correct"] == 1 else "❌")
+            hist_str = "".join(results)
+            
+        prob_color = "info" if prob >= 0.5 else "warning"
+        dir_icon = "📈" if prob >= 0.5 else "📉"
+        
+        lines.append(f"**[{i:02d}] {sector_name}**")
+        lines.append(f"> <font color=\"{prob_color}\">PROB_UP</font>: **{prob:.1%}** {dir_icon}")
+        lines.append(f"> <font color=\"comment\">PAST_7 </font>: [{hist_str}]")
         lines.append("")
-        lines.append("| 代码 | 名称 | 上涨概率 | 信号 |")
-        lines.append("|------|------|:--------:|------|")
-
-        for code, name in SECTORS[sk]["a"].items():
-            # 所有个股使用板块概率（板块级预测）
-            prob = res["prob_up"]
-            lines.append(f"| {code} | {name} | {prob:.1%} | {signal_emoji(prob)} |")
-        lines.append("")
-
-    # 关键驱动因子
-    lines += ["### 🔑 关键驱动因子（各板块 Top 3）", ""]
-    lines += ["| 板块 | 因子1 | 因子2 | 因子3 |", "|------|-------|-------|-------|"]
-    for sk, res in sector_results.items():
-        top3 = [f"`{f}` {v:.1%}" for f, v in res["top_features"][:3]]
-        while len(top3) < 3:
-            top3.append("—")
-        lines.append(f"| {res['sector_name']} | {top3[0]} | {top3[1]} | {top3[2]} |")
-
-    lines += ["", "---", ""]
-
-    # ── Part 2：过去7天回测准确率 ─────────────────────────────────
-    lines += [
-        "## 📈 过去 7 个交易日回测准确率",
-        "",
-        f"> 使用已训练模型，对最近 {BACKTEST_DAYS} 个A股交易日做回测，验证 Lead-Lag 信号有效性",
-        "",
-    ]
-
-    # 汇总准确率表
-    lines += ["### 板块准确率汇总", ""]
-    lines += ["| 板块 | 准确次数 | 总次数 | 近7日准确率 | 整体历史准确率 |",
-              "|------|:--------:|:------:|:-----------:|:--------------:|"]
-
-    for sk, bt_df in backtest.items():
-        if sk not in sector_results:
-            continue
-        n_correct = bt_df["correct"].sum()
-        n_total   = len(bt_df)
-        bt_acc    = n_correct / n_total if n_total > 0 else 0
-        hist_acc  = sector_results[sk]["accuracy"]
-        lines.append(
-            f"| {sector_results[sk]['sector_name']} | {n_correct} | {n_total} | "
-            f"**{bt_acc:.0%}** | {hist_acc:.1%} |"
-        )
-
-    lines += [""]
-
-    # 逐板块逐日明细
-    lines += ["### 逐日明细", ""]
-
-    for sk, bt_df in backtest.items():
-        if sk not in sector_results:
-            continue
-        lines.append(f"**{sector_results[sk]['sector_name']}**")
-        lines.append("")
-        lines.append("| 日期 | 预测概率 | 预测方向 | 实际方向 | 是否正确 |")
-        lines.append("|------|:--------:|:--------:|:--------:|:--------:|")
-        for _, row in bt_df.iterrows():
-            tick = "✅" if row["correct"] == 1 else "❌"
-            lines.append(
-                f"| {row['date']} | {row['prob_up']:.1%} | "
-                f"{row['pred_dir']} | {row['actual_dir']} | {tick} |"
-            )
-        lines.append("")
-
-    # ── Part 3：免责声明 ──────────────────────────────────────────
-    lines += [
-        "---",
-        "",
-        "## ⚠️ 免责声明",
-        "",
-        "- 本报告基于统计模型，历史规律不代表未来表现",
-        "- 模型仅使用价格信号，未考虑基本面、政策、突发事件等因素",
-        "- 准确率低于 60% 时信号可靠性较低，请谨慎参考",
-        "- **本报告不构成任何投资建议，据此操作风险自负**",
-        "",
-    ]
 
     return "\n".join(lines)
 

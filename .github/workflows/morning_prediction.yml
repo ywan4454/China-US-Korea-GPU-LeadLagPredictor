@@ -2,8 +2,8 @@ name: Morning Prediction (A-Share Lead-Lag)
 
 on:
   schedule:
-    # 北京时间 09:00 = UTC 01:00，仅工作日（周一至周五）
-    - cron: '0 1 * * 1-5'
+    # 北京时间 09:10 = UTC 01:10，仅工作日（周一至周五）
+    - cron: '10 1 * * 1-5'
   workflow_dispatch:  # 允许手动触发
 
 jobs:
