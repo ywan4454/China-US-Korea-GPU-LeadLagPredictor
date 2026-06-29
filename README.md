@@ -1,10 +1,10 @@
 # China-US-Korea GPU LeadLag Predictor (GPU/AI 产业链跨市场预测系统)
 
-🤖 **AI-Quant System**: 基于跨市场 Lead-Lag（领涨-跟涨）效应的 A 股 GPU/AI 产业链早盘预测系统。
+**AI-Quant System**: 基于跨市场 Lead-Lag（领涨-跟涨）效应的 A 股 GPU/AI 产业链早盘预测系统。
 
 本系统通过追踪美股和韩股核心科技巨头（如英伟达、AMD、ASML、SK 海力士等）的最新价格动态，利用时差优势，在 A 股开盘前自动输出 AI 产业链 5 大核心板块及 22 只龙头个股的当日上涨概率。
 
-## 📊 核心逻辑 (The Logic)
+## 核心逻辑 (The Logic)
 
 全球半导体和 AI 产业链高度联动，但各大资本市场存在显著的交易时差：
 1. **美股 (T-1 日)**：全球 AI 风向标，其收盘时间在 A 股 T 日开盘之前。
@@ -17,18 +17,18 @@
 - 利用上述前置海外因子，通过机器学习模型对 A 股对应映射标的进行二元分类预测（当日是否上涨），并输出上涨概率 (PROB_UP)。
 - 系统每天早盘 (北京时间 09:10) 自动通过 GitHub Actions 运行，并通过企业微信 Webhook 按照极客风格 (Geek Style) 推送当日预测报告及过去 7 天的回测胜率。
 
-## 💾 数据来源 (Data Sources)
+## 数据来源 (Data Sources)
 
 所有量化数据均通过 **`yfinance` (Yahoo Finance)** 接口实时抓取，确保数据的稳定性和及时性。
 
 ### 1. 前置特征数据 (Features)
-- **🇺🇸 美股 (US Stocks)**: NVDA, AMD, ASML, AMAT, CDNS, SMCI, COHR 等 16 只产业链核心美股。
-- **🇰🇷 韩股 (Korean Stocks)**: 005930.KS (三星电子), 000660.KS (SK Hynix), 009150.KS (三星电机) 等 3 只核心韩股。
+- **美股 (US Stocks)**: NVDA, AMD, ASML, AMAT, CDNS, SMCI, COHR 等 16 只产业链核心美股。
+- **韩股 (Korean Stocks)**: 005930.KS (三星电子), 000660.KS (SK Hynix), 009150.KS (三星电机) 等 3 只核心韩股。
 
 ### 2. 预测目标数据 (Targets)
-- **🇨🇳 A股 (A-Shares)**: 选取《全球GPU与AI算力产业链全景图》中 15 大环节的 22 只核心 A 股标的。
+- **A股 (A-Shares)**: 选取《全球GPU与AI算力产业链全景图》中 15 大环节的 22 只核心 A 股标的。
 
-## 🧩 覆盖的 5 大核心板块 (Sectors)
+## 覆盖的 5 大核心板块 (Sectors)
 
 为了提高预测准确率，系统将标的划分为 5 大生态板块进行集群预测：
 
@@ -43,7 +43,7 @@
 5. **板块5·连接与散热** (光模块 / 液冷 / 连接器 / 光纤)
    - *对标*: 中际旭创、天孚通信、新易盛等
 
-## 🚀 部署与运行 (Usage)
+## 部署与运行 (Usage)
 
 本系统支持两种运行模式，你可以根据需求选择：
 
@@ -69,12 +69,12 @@ cd China-US-Korea-GPU-LeadLagPredictor
 pip install -r requirements.txt
 
 # 4. 运行预测模型
-# 💡 提示：如在国内运行，因访问 Yahoo Finance，可能需要配置终端代理，例如：
+# 提示：如在国内运行，因访问 Yahoo Finance，可能需要配置终端代理，例如：
 # export https_proxy=http://127.0.0.1:7890
 python main.py
 ```
 
-## 🤝 如何贡献代码 (How to Contribute)
+## 如何贡献代码 (How to Contribute)
 
 欢迎大家为这个开源项目贡献代码！由于安全权限控制，你不能直接将代码 push 到本仓库。请按照以下标准的开源工作流提交你的代码：
 
@@ -86,4 +86,4 @@ python main.py
 6. **发起 Pull Request (PR)**：回到本仓库主页，点击 `Pull requests` -> `New pull request`，提交你的修改请求。我会在这里手动审阅你的代码，审核通过后就会合并到主分支中！
 
 ---
-*⚠️ **免责声明 (Disclaimer)**: 本系统基于量化统计模型，历史规律不代表未来表现。模型仅使用价格量价信号，未考虑基本面、政策、突发事件等因素。预测结果仅供技术交流与参考，不构成任何实质性投资建议。*
+* **免责声明 (Disclaimer)**: 本系统基于量化统计模型，历史规律不代表未来表现。模型仅使用价格量价信号，未考虑基本面、政策、突发事件等因素。预测结果仅供技术交流与参考，不构成任何实质性投资建议。*
