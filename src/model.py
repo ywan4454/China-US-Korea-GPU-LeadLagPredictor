@@ -14,52 +14,59 @@ from src.processor import get_feature_columns
 
 def _find_optimal_threshold(test_probs: np.ndarray, y_test: np.ndarray) -> tuple:
     """
-    在测试集上扫描阈值，找到让"出手胜率"最大化的最优中性区间。
+    在测试集上扫描阈值，采用【自适应递进逻辑】寻找最佳中性区间。
     对称阈值：prob > th -> UP, prob < (1-th) -> DOWN, 中间 -> NEUTRAL。
 
-    核心逻辑：
-    - 从高阈值（0.75）往低阈值（0.51）逐步扫描
-    - 每个阈值计算：出手次数、胜率、被过滤为 NEUTRAL 的比例
-    - 选择条件：胜率最高 且 至少有 20% 的预测被过滤为 NEUTRAL 且 出手次数 >= 3
-    - 如果没有任何阈值满足条件，fallback 到 0.55
+    自适应递进逻辑 (Adaptive Tiers)：
+    优先满足高容错、高胜率的严苛条件；若不满足则逐级降级。
+    - Tier 1 (极度挑剔): 至少过滤 50% 的日子，且胜率 >= 75%
+    - Tier 2 (高度挑剔): 至少过滤 40% 的日子，且胜率 >= 70%
+    - Tier 3 (中度挑剔): 至少过滤 30% 的日子，且胜率 >= 65%
+    - Tier 4 (底线防御): 至少过滤 20% 的日子，且胜率 > 基准胜率
 
     Returns: (best_threshold, best_winrate, n_signals, n_neutral_pct)
     """
     n_total = len(test_probs)
-
-    # 先算基准胜率（无任何过滤）
     baseline_pred = (test_probs >= 0.5).astype(int)
     baseline_winrate = (baseline_pred == y_test).sum() / n_total if n_total > 0 else 0.5
 
-    best = None
+    candidates = []
 
     for th in np.arange(0.51, 0.76, 0.01):
         mask = (test_probs > th) | (test_probs < (1.0 - th))
         n_signals = mask.sum()
+        if n_signals < 3:  # 底线要求：至少出手 3 次
+            continue
+            
         n_neutral = n_total - n_signals
         neutral_pct = n_neutral / n_total if n_total > 0 else 0
-
-        # 必须有至少 20% 被过滤为 NEUTRAL（确保 NEUTRAL 真的会出现）
-        if neutral_pct < 0.20:
-            continue
-        # 出手次数至少 3 次
-        if n_signals < 3:
-            continue
-
+        
         pred_dirs = (test_probs[mask] > th).astype(int)
         actuals = y_test[mask]
         wins = (pred_dirs == actuals).sum()
         winrate = wins / n_signals
+        
+        candidates.append({
+            "th": float(th), 
+            "winrate": float(winrate), 
+            "n_signals": int(n_signals), 
+            "neutral_pct": float(neutral_pct)
+        })
 
-        # 胜率必须高于基准
-        if winrate <= baseline_winrate:
-            continue
+    # 定义自适应降级条件
+    tiers = [
+        lambda c: c["neutral_pct"] >= 0.50 and c["winrate"] >= 0.75,
+        lambda c: c["neutral_pct"] >= 0.40 and c["winrate"] >= 0.70,
+        lambda c: c["neutral_pct"] >= 0.30 and c["winrate"] >= 0.65,
+        lambda c: c["neutral_pct"] >= 0.20 and c["winrate"] > baseline_winrate,
+    ]
 
-        if best is None or winrate > best[1]:
-            best = (float(th), float(winrate), int(n_signals), float(neutral_pct))
-
-    if best is not None:
-        return best
+    for condition in tiers:
+        valid_candidates = [c for c in candidates if condition(c)]
+        if valid_candidates:
+            # 在当前满足条件的梯队里，选择胜率最高的；若胜率一样，选过滤比例更高的
+            best = max(valid_candidates, key=lambda c: (c["winrate"], c["neutral_pct"]))
+            return (best["th"], best["winrate"], best["n_signals"], best["neutral_pct"])
 
     # Fallback: 默认 0.55 中性阈值
     return (0.55, float(baseline_winrate), int(n_total), 0.0)
