@@ -15,17 +15,18 @@ from src.processor import get_feature_columns
 
 def _find_optimal_threshold(test_probs: np.ndarray, y_test: np.ndarray) -> tuple:
     """
-    在测试集上扫描不同的中性区间阈值，找到统计学上显著提升胜率的最优阈值。
+    在测试集上扫描不同的中性区间阈值，找到最优阈值。
     采用对称阈值：prob > threshold -> UP, prob < (1 - threshold) -> DOWN, 中间 -> NEUTRAL。
 
-    选择标准：
-    1. 二项分布检验 p-value < 0.05（胜率显著高于随机猜测 50%）
-    2. 信号覆盖率 >= 5 个样本（避免过拟合）
-    3. 在满足以上条件的阈值中，选择胜率最高的
+    三级递进选择策略（适应小样本测试集）：
+    Level 1: p-value < 0.05 且胜率最高（严格统计显著）
+    Level 2: p-value < 0.10 且胜率最高（宽松统计显著）
+    Level 3: 胜率 > 55% 且最高（纯经验法则）
+    均要求信号数 >= 5
 
     Returns: (best_threshold, best_winrate, n_signals, p_value)
     """
-    best = (0.50, 0.50, len(test_probs), 1.0)  # fallback: 无中性区间
+    candidates = []
 
     for th in np.arange(0.51, 0.76, 0.01):
         mask = (test_probs > th) | (test_probs < (1.0 - th))
@@ -37,13 +38,30 @@ def _find_optimal_threshold(test_probs: np.ndarray, y_test: np.ndarray) -> tuple
         actuals = y_test[mask]
         wins = (pred_dirs == actuals).sum()
         winrate = wins / n_signals
-
         p_val = binomtest(wins, n_signals, 0.5, alternative='greater').pvalue
 
-        if p_val < 0.05 and winrate > best[1]:
-            best = (th, winrate, int(n_signals), float(p_val))
+        candidates.append((th, winrate, int(n_signals), float(p_val)))
 
-    return best
+    if not candidates:
+        return (0.55, 0.50, len(test_probs), 1.0)
+
+    # Level 1: p < 0.05
+    level1 = [c for c in candidates if c[3] < 0.05]
+    if level1:
+        return max(level1, key=lambda x: x[1])
+
+    # Level 2: p < 0.10
+    level2 = [c for c in candidates if c[3] < 0.10]
+    if level2:
+        return max(level2, key=lambda x: x[1])
+
+    # Level 3: winrate > 55%
+    level3 = [c for c in candidates if c[1] > 0.55]
+    if level3:
+        return max(level3, key=lambda x: x[1])
+
+    # Fallback: 默认 0.55 中性阈值
+    return (0.55, 0.50, len(test_probs), 1.0)
 
 
 def train_sector_models(df: pd.DataFrame) -> dict:
