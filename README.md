@@ -1,4 +1,4 @@
-# A-Share Predictor (GPU/AI 产业链 Lead-Lag 预测系统)
+# China-US-Korea GPU LeadLag Predictor (GPU/AI 产业链跨市场预测系统)
 
 🤖 **AI-Quant System**: 基于跨市场 Lead-Lag（领涨-跟涨）效应的 A 股 GPU/AI 产业链早盘预测系统。
 
