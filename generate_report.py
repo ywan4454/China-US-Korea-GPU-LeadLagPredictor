@@ -36,11 +36,30 @@ def update_and_get_history(df: pd.DataFrame, sector_results: dict) -> dict:
     """
     维护一个本地的真实预测缓存，防止未来函数。
     读取历史预测，填入 df 中已知的真实涨跌结果，然后把今天的预测追加进去保存。
+    冷启动时，用模型测试集回测结果填充过去 7 天。
     """
     history = {}
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r") as f:
             history = json.load(f)
+
+    # 0. 冷启动：如果缓存中已验证结果不足7天，用回测数据填充
+    verified_dates = [d for d in history.keys()
+                      if any(v.get("correct") is not None for v in history[d].values())]
+    if len(verified_dates) < 7:
+        # 从模型的 backtest_7 中提取回测结果写入缓存
+        for sk, res in sector_results.items():
+            for bt in res.get("backtest_7", []):
+                dt = bt["date"]
+                if dt not in history:
+                    history[dt] = {}
+                if sk not in history[dt]:
+                    history[dt][sk] = {
+                        "prob_up": bt["prob_up"],
+                        "pred_dir": bt["pred_dir"],
+                        "actual_label": bt["actual_label"],
+                        "correct": bt["correct"]
+                    }
 
     # 1. 更新过去预测的真实结果
     for date_str, daily_data in history.items():

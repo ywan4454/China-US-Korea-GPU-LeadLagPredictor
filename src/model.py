@@ -18,7 +18,7 @@ def train_sector_models(df: pd.DataFrame) -> dict:
     目标：该板块等权篮子的涨跌方向
     
     Returns:
-        {sector_key: {model, accuracy, prob_up, latest_date, feature_importance, ...}}
+        {sector_key: {model, accuracy, prob_up, latest_date, feature_importance, backtest_7, ...}}
     """
     feature_cols = get_feature_columns(df)
     results = {}
@@ -62,6 +62,25 @@ def train_sector_models(df: pd.DataFrame) -> dict:
         importance = dict(zip(feature_cols, model.feature_importances_))
         top_features = sorted(importance.items(), key=lambda x: -x[1])[:5]
 
+        # 回测最近7个测试集交易日的预测结果（用于冷启动填充 PAST_7）
+        backtest_7 = []
+        if len(X_test) >= 1:
+            test_probs = model.predict_proba(X_test)[:, 1]
+            test_dates = X_test.index
+            for i in range(max(0, len(X_test) - 7), len(X_test)):
+                dt_str = test_dates[i].strftime("%Y-%m-%d")
+                p_up = float(test_probs[i])
+                pred_dir = 1 if p_up >= 0.5 else 0
+                actual = int(y_test.iloc[i])
+                correct = 1 if pred_dir == actual else 0
+                backtest_7.append({
+                    "date": dt_str,
+                    "prob_up": p_up,
+                    "pred_dir": pred_dir,
+                    "actual_label": actual,
+                    "correct": correct
+                })
+
         results[sk] = {
             "model":           model,
             "accuracy":        acc,
@@ -72,6 +91,7 @@ def train_sector_models(df: pd.DataFrame) -> dict:
             "sector_name":     sd["name"],
             "sector_desc":     sd["desc"],
             "n_samples":       n,
+            "backtest_7":      backtest_7,
         }
 
     return results
