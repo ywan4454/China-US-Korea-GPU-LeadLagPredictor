@@ -180,6 +180,52 @@ def main():
     print("\n训练模型...")
     sector_results = train_sector_models(df)
 
+    # ==========================================
+    # 【Bugfix】: 生成“今天”的最新特征向量
+    # 因为今天A股还没收盘，df 里的最后一行其实是“昨天”的训练数据。
+    # 真正的预测必须用昨晚的美股收盘和今天早上的韩股开盘。
+    # ==========================================
+    today_date = pd.to_datetime(datetime.now().date())
+    
+    # 1. 提取昨晚美股最新收盘
+    latest_us = us_returns.iloc[-1:] 
+    
+    # 2. 提取今天早上韩国10:00截面
+    latest_kr = kr_gaps.iloc[-1:]
+    
+    # 3. 构造 today_features
+    today_features = {}
+    for col in latest_us.columns:
+        today_features[col] = latest_us[col].values[0]
+    for col in latest_kr.columns:
+        today_features[col] = latest_kr[col].values[0]
+
+    for sk, sd in SECTORS.items():
+        us_cols = [f"US_{t}" for t in sd["us"] if f"US_{t}" in latest_us.columns]
+        if us_cols:
+            today_features[f"{sk}_US"] = latest_us[us_cols].mean(axis=1).values[0]
+            
+        kr_cols = [f"KR_{t.split('.')[0]}" for t in sd["kr"] if f"KR_{t.split('.')[0]}" in latest_kr.columns]
+        if kr_cols:
+            today_features[f"{sk}_KR"] = latest_kr[kr_cols].mean(axis=1).values[0]
+            
+    today_df = pd.DataFrame([today_features], index=[today_date])
+    
+    # 将 today_df 送入训练好的模型中进行独立预测，覆盖原本 sector_results 里默认提取的历史最后一天结果
+    from src.processor import get_feature_columns
+    feature_cols = get_feature_columns(df)
+    for sk, res in sector_results.items():
+        clf = res["model"]
+        X_today = today_df[[c for c in feature_cols if sk in c or not any(s in c for s in SECTORS.keys() if s != sk)]]
+        
+        # 为了兼容特征列，补齐可能缺失的列
+        for col in clf.feature_names_in_:
+            if col not in X_today.columns:
+                X_today[col] = latest_us[col].values[0] if col in latest_us.columns else 0
+                
+        prob = clf.predict_proba(X_today[clf.feature_names_in_])[0][1]
+        res["prob_up"] = prob
+
     print("\n生成/更新真实预测缓存...")
     history = update_and_get_history(df, sector_results)
 
