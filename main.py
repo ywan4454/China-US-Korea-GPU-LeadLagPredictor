@@ -49,6 +49,13 @@ def main():
     for d in ashare_data.values():
         idx = d["return"].dropna().index
         all_dates = idx if all_dates is None else all_dates.union(idx)
+    
+    import pandas as pd
+    from datetime import datetime
+    today = pd.Timestamp(datetime.today().strftime('%Y-%m-%d'))
+    if today not in all_dates:
+        all_dates = all_dates.append(pd.DatetimeIndex([today]))
+        
     all_dates = all_dates.sort_values()
 
     us_aligned      = align_us_to_ashare(us_returns, all_dates)
@@ -67,7 +74,7 @@ def main():
     stock_preds = predict_individual_stocks(df, sector_results)
 
     # ── 4. 输出报告 ──────────────────────────────────────────────
-    print_report(sector_results, stock_preds)
+    print_report(sector_results, stock_preds, df)
 
 
 if __name__ == "__main__":

@@ -211,7 +211,7 @@ def predict_individual_stocks(df: pd.DataFrame, sector_results: dict) -> dict:
     return stock_preds
 
 
-def print_report(sector_results: dict, stock_preds: dict) -> None:
+def print_report(sector_results: dict, stock_preds: dict, df: pd.DataFrame = None) -> None:
     """打印每日产业链预测报告"""
     BOLD  = "\033[1m"
     GREEN = "\033[92m"
@@ -235,6 +235,32 @@ def print_report(sector_results: dict, stock_preds: dict) -> None:
     print(BOLD + "=" * 65 + RESET)
     print(BOLD + "   GPU/AI 全产业链 · 早盘预测报告" + RESET)
     print(BOLD + "=" * 65 + RESET)
+
+    if df is not None:
+        latest = df.iloc[-1]
+        us_cols = [c for c in df.columns if c.startswith('US_') and len(c.split('_')) == 2]
+        kr_cols = [c for c in df.columns if c.startswith('KR_') and len(c.split('_')) == 2]
+        
+        print(f"\n{BOLD}  【前置外盘指标参考】{RESET}")
+        print(f"  {GRAY}美股 (T-1日):{RESET}")
+        us_strs = []
+        for c in us_cols:
+            val = latest[c]
+            if pd.notna(val):
+                color = GREEN if val > 0 else (RED if val < 0 else RESET)
+                us_strs.append(f"{c.replace('US_', '')}: {color}{val:+.2%}{RESET}")
+        print("  " + ", ".join(us_strs[:8]))
+        print("  " + ", ".join(us_strs[8:]))
+        
+        print(f"  {GRAY}韩股 (今日 10:00 KST):{RESET}")
+        kr_strs = []
+        for c in kr_cols:
+            val = latest[c]
+            if pd.notna(val):
+                color = GREEN if val > 0 else (RED if val < 0 else RESET)
+                kr_strs.append(f"{c.replace('KR_', '')}: {color}{val:+.2%}{RESET}")
+        print("  " + ", ".join(kr_strs))
+
 
     for sk, res in sector_results.items():
         print()
