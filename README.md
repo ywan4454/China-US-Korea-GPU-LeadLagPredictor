@@ -97,10 +97,16 @@ cd China-US-Korea-GPU-LeadLagPredictor
 # 3. 安装必备依赖 (请确保已安装 Python)
 pip install -r requirements.txt
 
-# 4. 运行预测模型
+# 4. 运行预测模型（日常预测）
 # 提示：如在国内运行，因访问 Yahoo Finance，可能需要配置终端代理，例如：
 # export https_proxy=http://127.0.0.1:7890
-python main.py
+python main.py run
+
+# 5. 运行最近N天回测
+python main.py backtest --days 7
+
+# 6. 查看全样本模型胜率评估
+python main.py eval
 ```
 
 ## 如何贡献代码 (How to Contribute)

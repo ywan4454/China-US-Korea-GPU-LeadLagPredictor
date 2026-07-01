@@ -147,7 +147,7 @@ def fetch_ashare_stocks(start_date: str = "2025-09-01") -> dict:
             intraday = (close_s - open_s) / open_s
             results[code] = {
                 "return": intraday,
-                "label": (intraday > 0).astype(int),
+                "label": intraday,
                 "name": name,
             }
         except Exception as e:

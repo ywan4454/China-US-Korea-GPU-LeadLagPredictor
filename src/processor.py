@@ -10,6 +10,7 @@ from __future__ import annotations
 import pandas as pd
 import numpy as np
 from src.stocks_universe import SECTORS
+from src.advanced_features import add_advanced_features
 
 
 def align_us_to_ashare(us_returns: pd.DataFrame, ashare_dates: pd.DatetimeIndex) -> pd.DataFrame:
@@ -81,7 +82,7 @@ def build_ashare_baskets(
         if returns_list:
             basket = pd.concat(returns_list, axis=1).mean(axis=1)
             sector_rows[f"{sk}_basket_ret"] = basket
-            sector_rows[f"{sk}_label"] = (basket > 0).astype(int)
+            sector_rows[f"{sk}_label"] = basket
 
     return (
         pd.DataFrame(sector_rows, index=ashare_dates),
@@ -109,9 +110,15 @@ def build_full_dataset(
         stock_labels,
     ], axis=1)
 
-    # 只要有任一板块标签存在就保留该行
+    # 只要有任一板块标签存在就保留该行，但强制保留最后一行（今日）用于预测
     label_cols = [c for c in all_data.columns if c.endswith("_label")]
-    all_data = all_data[all_data[label_cols].notna().any(axis=1)]
+    mask = all_data[label_cols].notna().any(axis=1)
+    if len(mask) > 0:
+        mask.iloc[-1] = True
+    all_data = all_data[mask]
+    
+    # 注入高级特征
+    all_data = add_advanced_features(all_data, us_aligned, kr_aligned)
 
     print(f"  Full dataset: {len(all_data)} rows × {len(all_data.columns)} cols")
     return all_data
@@ -121,6 +128,6 @@ def get_feature_columns(df: pd.DataFrame) -> list[str]:
     """提取所有特征列（US_ / KR_ / _US / _KR 开头结尾的列）"""
     return [
         c for c in df.columns
-        if c.startswith("US_") or c.startswith("KR_")
+        if c.startswith("US_") or c.startswith("KR_") or c.startswith("ADV_")
            or c.endswith("_US") or c.endswith("_KR")
     ]

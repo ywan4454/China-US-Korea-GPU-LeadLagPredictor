@@ -1,0 +1,92 @@
+INDUSTRY_HASHMAP = {
+  "新思科技": {"market": "美股", "sub_industry": "1. EDA软件", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "18B"},
+  "楷登电子": {"market": "美股", "sub_industry": "1. EDA软件", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "18B"},
+  "西门子EDA": {"market": "美股/欧股", "sub_industry": "1. EDA软件", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "18B"},
+  "华大九天": {"market": "A股", "sub_industry": "1. EDA软件", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "18B"},
+  "概伦电子": {"market": "A股", "sub_industry": "1. EDA软件", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "18B"},
+  "广立微": {"market": "A股", "sub_industry": "1. EDA软件", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "18B"},
+  
+  "英伟达": {"market": "美股", "sub_industry": "2. GPU/CPU Fabless", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "200B+"},
+  "AMD": {"market": "美股", "sub_industry": "2. GPU/CPU Fabless", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "200B+"},
+  "Intel": {"market": "美股", "sub_industry": "2. GPU/CPU Fabless", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "200B+"},
+  "海光信息": {"market": "A股", "sub_industry": "2. GPU/CPU Fabless", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "200B+"},
+  "壁仞科技": {"market": "A股(未上市/概念)", "sub_industry": "2. GPU/CPU Fabless", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "200B+"},
+  "摩尔线程": {"market": "A股(未上市/概念)", "sub_industry": "2. GPU/CPU Fabless", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "200B+"},
+  
+  "苹果": {"market": "美股", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+  "高通": {"market": "美股", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+  "联发科": {"market": "台股", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+  "华为海思": {"market": "A股(未上市/概念)", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+  "寒武纪": {"market": "A股", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+  "瑞芯微": {"market": "A股", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+  "芯原股份": {"market": "A股", "sub_industry": "3. NPU与端侧计算新核心", "sector": "第一板块：芯片设计与底层研发", "tam_2026": "60B"},
+
+  "台积电(TSMC)": {"market": "美股/台股", "sub_industry": "4. 晶圆代工(Foundry)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "160B"},
+  "三星": {"market": "韩股", "sub_industry": "4. 晶圆代工(Foundry)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "160B"},
+  "中芯国际": {"market": "A股/港股", "sub_industry": "4. 晶圆代工(Foundry)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "160B"},
+  "华虹公司": {"market": "A股/港股", "sub_industry": "4. 晶圆代工(Foundry)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "160B"},
+  
+  "ASML": {"market": "美股/欧股", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+  "应用材料": {"market": "美股", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+  "泛林半导体": {"market": "美股", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+  "科磊": {"market": "美股", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+  "中微公司": {"market": "A股", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+  "北方华创": {"market": "A股", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+  "上海微电子": {"market": "A股(未上市/概念)", "sub_industry": "5. 核心设备", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "135B"},
+
+  "SK海力士": {"market": "韩股", "sub_industry": "6. 高带宽内存(HBM)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "32B"},
+  "美光": {"market": "美股", "sub_industry": "6. 高带宽内存(HBM)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "32B"},
+  "长鑫存储(CXMT)": {"market": "A股(未上市/概念)", "sub_industry": "6. 高带宽内存(HBM)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "32B"},
+  "武汉新芯": {"market": "A股(未上市/概念)", "sub_industry": "6. 高带宽内存(HBM)", "sector": "第二板块：晶圆制造、设备与核心存储", "tam_2026": "32B"},
+
+  "日月光": {"market": "美股/台股", "sub_industry": "7. 先进封装(CoWoS)", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "12B"},
+  "长电科技": {"market": "A股", "sub_industry": "7. 先进封装(CoWoS)", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "12B"},
+  "通富微电": {"market": "A股", "sub_industry": "7. 先进封装(CoWoS)", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "12B"},
+
+  "奥特斯": {"market": "欧股", "sub_industry": "8. 高阶PCB与MSAP工艺", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "16B"},
+  "欣兴电子": {"market": "台股", "sub_industry": "8. 高阶PCB与MSAP工艺", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "16B"},
+  "健鼎": {"market": "台股", "sub_industry": "8. 高阶PCB与MSAP工艺", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "16B"},
+  "深南电路": {"market": "A股", "sub_industry": "8. 高阶PCB与MSAP工艺", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "16B"},
+  "沪电股份": {"market": "A股", "sub_industry": "8. 高阶PCB与MSAP工艺", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "16B"},
+
+  "日东纺": {"market": "日股", "sub_industry": "9. 超低损耗电子布", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "3.5B"},
+  "味之素": {"market": "日股", "sub_industry": "9. 超低损耗电子布", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "3.5B"},
+  "宏和科技": {"market": "A股", "sub_industry": "9. 超低损耗电子布", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "3.5B"},
+
+  "泰瑞达": {"market": "美股", "sub_industry": "10. 测试(ATE)与被动件", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "14B"},
+  "爱德万": {"market": "日股", "sub_industry": "10. 测试(ATE)与被动件", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "14B"},
+  "村田制作所": {"market": "日股", "sub_industry": "10. 测试(ATE)与被动件", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "14B"},
+  "华峰测控": {"market": "A股", "sub_industry": "10. 测试(ATE)与被动件", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "14B"},
+  "长川科技": {"market": "A股", "sub_industry": "10. 测试(ATE)与被动件", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "14B"},
+  "三环集团": {"market": "A股", "sub_industry": "10. 测试(ATE)与被动件", "sector": "第三板块：先进封装与超高频物理材料", "tam_2026": "14B"},
+
+  "工业富联": {"market": "A股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "鸿海": {"market": "台股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "广达": {"market": "台股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "纬颖": {"market": "台股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "超微": {"market": "美股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "浪潮信息": {"market": "A股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "联想": {"market": "港股", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+  "超聚变": {"market": "A股(未上市/概念)", "sub_industry": "11. AI整机柜ODM", "sector": "第四板块：整机集成与系统代工", "tam_2026": "250B"},
+
+  "高意(Coherent)": {"market": "美股", "sub_industry": "12. 光模块系统(CPO)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "22B"},
+  "中际旭创": {"market": "A股", "sub_industry": "12. 光模块系统(CPO)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "22B"},
+  "新易盛": {"market": "A股", "sub_industry": "12. 光模块系统(CPO)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "22B"},
+  "天孚": {"market": "A股", "sub_industry": "12. 光模块系统(CPO)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "22B"},
+
+  "博通": {"market": "美股", "sub_industry": "13. 光电核心芯片", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "8.5B"},
+  "Marvell": {"market": "美股", "sub_industry": "13. 光电核心芯片", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "8.5B"},
+  "Lumentum": {"market": "美股", "sub_industry": "13. 光电核心芯片", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "8.5B"},
+  "源杰科技": {"market": "A股", "sub_industry": "13. 光电核心芯片", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "8.5B"},
+  "仕佳光子": {"market": "A股", "sub_industry": "13. 光电核心芯片", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "8.5B"},
+
+  "安费诺": {"market": "美股", "sub_industry": "14. 高速铜缆(DAC)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "6.5B"},
+  "立讯精密": {"market": "A股", "sub_industry": "14. 高速铜缆(DAC)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "6.5B"},
+  "兆龙互连": {"market": "A股", "sub_industry": "14. 高速铜缆(DAC)", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "6.5B"},
+
+  "维谛(Vertiv)": {"market": "美股", "sub_industry": "15. 液冷散热系统", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "12B"},
+  "双鸿": {"market": "台股", "sub_industry": "15. 液冷散热系统", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "12B"},
+  "奇鋐": {"market": "台股", "sub_industry": "15. 液冷散热系统", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "12B"},
+  "英维克": {"market": "A股", "sub_industry": "15. 液冷散热系统", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "12B"},
+  "曙光数创": {"market": "A股", "sub_industry": "15. 液冷散热系统", "sector": "第五板块：网络互联与集群物理层", "tam_2026": "12B"}
+}
